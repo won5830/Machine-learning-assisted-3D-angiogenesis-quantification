@@ -9,5 +9,5 @@ conda install pytorch torchvision pytorch-cuda=11.3 -c pytorch -c nvidia
 
 ## Model Training
 ### Data Preparation 
-Download the data for skeleton segmentation here and save in `data/test_skel_ply_hdf5_data_train*.h5`
+Download the data for skeleton segmentation [here](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d) and save in `data/test_skel_ply_hdf5_data_train*.h5`
 
