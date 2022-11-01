@@ -1,5 +1,5 @@
 ## Data Preparation 
-Download the data for skeleton segmentation [here](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d) and save in `data/test_skel_ply_hdf5_data_train*.h5`
+Download the data for skeleton segmentation [here](https://drive.google.com/file/d/1xOV4dOoEmoTvoUJTwri3bK9yP0qrI_Ai/view?usp=share_link) and save in `data/test_skel_ply_hdf5_data_train*.h5`
 
 ## Run 
 You can run different modes with following codes. Trained model can later be used at 3D evaluation pipeline.
