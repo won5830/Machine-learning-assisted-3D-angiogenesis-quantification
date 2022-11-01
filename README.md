@@ -34,17 +34,16 @@ python setup.py install
 cd ../..
 ```
 ### Data preparation
-Download the angiogenesis dataset [here](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d). Prepared `h5` file contains N by 3 matrix of each chamber's original data and skeleton data extracted through *deep point consolidation*. 
+Download the angiogenesis dataset [here](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d). Prepared `h5` file contains N by 3 matrix of each chamber's original data and skeleton data extracted through *Deep Point Consolidation* module. 
 ```
-Pointnet2.PyTorch
-├── pointnet2
-├── tools
-│   ├──data
-│   │  ├── KITTI
-│   │  │   ├── ImageSets
-│   │  │   ├── object
-│   │  │   │   ├──training
-│   │  │   │      ├──calib & velodyne & label_2 & image_2
+Tot_data.h5
+├── ..
+├── chamber*
+│   ├──skeleton
+│   │  ├── Nx3 matrix
+│   ├──original
+│   │  ├── Mx3 matrix
+├── ..
 ```
 ### Run 
 Name of the dataset should be formatted as follows before running. Evaluation result will be saved in `checkpoint/exp_name` as `csv` file.  
