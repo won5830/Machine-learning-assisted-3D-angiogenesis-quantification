@@ -1,7 +1,7 @@
-### Data Preparation 
+## Data Preparation 
 Download the data for skeleton segmentation [here](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d) and save in `data/test_skel_ply_hdf5_data_train*.h5`
 
-### Run 
+## Run 
 You can run different modes with following codes. Trained model can later be used at 3D evaluation pipeline.
 ```shell
 ## K-Fold training for model evaluation
