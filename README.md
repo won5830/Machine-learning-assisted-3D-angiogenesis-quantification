@@ -26,13 +26,16 @@ python main.py --eval=True --kfold=False --exp_name=221101_test --model=sphadgcn
 
 ## Total Pipeline
 
-
 ### Installation
-Install pointnet2 library by running the following command:
+Before running, install pointnet2 library by running the following command:
 ```shell
 cd utils/pointnet2
 python setup.py install
 cd ../..
 ```
+
 ### Data Preparation 
-Download the data for skeleton segmentation [here](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d) and save in `data/test_skel_ply_hdf5_data_train*.h5`
+Download the angiogenesis dataset [here](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d) and save in `data/`.
+Name of the dataset should be formatted as follows. 
+* If you want to evaluate angiogenesis data through skeleton data that is already extracted with [deep point consolidation](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d), save `ply` data as `input_ply_data_skel*.ply` 
+* If you want to train on ModelNet10, you can use `--num_category 10`.
