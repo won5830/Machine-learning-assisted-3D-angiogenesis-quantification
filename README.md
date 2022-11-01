@@ -34,7 +34,7 @@ python setup.py install
 cd ../..
 ```
 ### Data preparation
-Download the angiogenesis dataset [here](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d).
+Download the angiogenesis dataset [here](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d). Prepared `h5` file contains N by 3 matrix of each chamber's original data and skeleton data extracted through *deep point consolidation*. 
 ```
 Pointnet2.PyTorch
 ├── pointnet2
