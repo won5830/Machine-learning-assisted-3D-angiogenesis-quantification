@@ -37,13 +37,13 @@ cd ../..
 Download the angiogenesis dataset [here](https://kr.mathworks.com/matlabcentral/fileexchange/43400-skeleton3d). Prepared `h5` file contains N by 3 matrix of each chamber's original data and skeleton data extracted through *Deep Point Consolidation* module. 
 ```
 Tot_data.h5
-├── ..
+├── ...
 ├── chamber*
 │   ├──skeleton
-│   │  ├── Nx3 matrix
+│   │  ├── **Nx3 matrix**
 │   ├──original
-│   │  ├── Mx3 matrix
-├── ..
+│   │  ├── **Mx3 matrix**
+├── ...
 ```
 ### Run 
 Name of the dataset should be formatted as follows before running. Evaluation result will be saved in `checkpoint/exp_name` as `csv` file.  
