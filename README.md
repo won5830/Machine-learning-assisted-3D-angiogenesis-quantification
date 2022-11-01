@@ -17,4 +17,9 @@ You can run different modes with following codes.
 ## K-Fold training for model evaluation
 python main.py --kfold=True --fold_num=5  --exp_name=221101_test --model=sphadgcnn --use_sgd=True --num_points=2400 --k=30 --dropout=0.3 --emb_dims=1024 --batch_size=2 --test_batch_size=2 --epochs=1500
 
+## Train without K-Fold
+python main.py --kfold=False --exp_name=221101_test --model=sphadgcnn --use_sgd=True --num_points=2400 --k=30 --dropout=0.3 --emb_dims=1024 --batch_size=2 --test_batch_size=2 --epochs=1500
+
+## Evaluation on test set
+python main.py --eval=True --kfold=False --exp_name=221101_test --model=sphadgcnn --use_sgd=True --num_points=2400 --k=30 --dropout=0.3 --emb_dims=1024 --batch_size=2 --test_batch_size=2 --epochs=1500
 ```
