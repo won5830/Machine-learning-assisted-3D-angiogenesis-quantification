@@ -40,9 +40,9 @@ Tot_data.h5
 ├── ...
 ├── chamber*
 │   ├──skeleton
-│   │  ├── **Nx3 matrix**
+│   │  ├── Nx3 matrix
 │   ├──original
-│   │  ├── **Mx3 matrix**
+│   │  ├── Mx3 matrix
 ├── ...
 ```
 ### Run 
