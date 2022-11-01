@@ -20,7 +20,7 @@ Tot_data.h5
 ## Run 
 Name of the dataset should be formatted as follows before running. Evaluation result will be saved in `checkpoint/exp_name` as `csv` file.  
 * If you want to evaluate angiogenesis data through skeleton data that is already extracted with [deep point consolidation](https://www.dropbox.com/s/hroijgjajj4cadi/point-cloud-processing-vs2013-201908.zip?dl=0), save skeleton data as `input_ply_data_skel*.ply` 
-* If you want to evaluate angiogenesis data from scratch, save original data as `input_ply_data_origin*.ply`. Temporary implementation of knn-contraction will be used for skeleton extraction. **Not recommended** due to the absence of several optimization modules. Please use DPC for meso-skeleton extraction. Variables can be further optimized at `knn-contraction` function in `skel_util.py`.  
+* If you want to evaluate angiogenesis data from scratch, save original data as `input_ply_data_origin*.ply`. Temporary implementation of (knn-contraction)[https://yadda.icm.edu.pl/baztech/element/bwmeta1.element.baztech-6a5c99ed-a7ff-4ed8-987b-269770e67b8b] will be used for skeleton extraction. **Not recommended** due to the absence of several optimization modules. Please use DPC for meso-skeleton extraction. Variables can be further optimized at `knn-contraction` function in `skel_util.py`.  
 
 ```shell
 ## Evaluation through pre-extracted skeleton
