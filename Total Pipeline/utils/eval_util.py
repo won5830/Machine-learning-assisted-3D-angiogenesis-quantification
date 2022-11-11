@@ -3,27 +3,17 @@
 
 """
 @Author: Byoungkwon Yoon
-@Contact: dbss@gmail.com
+@Contact: dbss1126@gmail.com
 @File: eval_util.py
 @Time: 2021/08/10 6:35 PM
 """
 
-import heapq
 import numpy as np
 from sklearn.cluster import DBSCAN
-import pickle
-from scipy.interpolate import UnivariateSpline
 import math
 from scipy.optimize import curve_fit
-import operator
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestNeighbors
-from sklearn.linear_model import LinearRegression
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-import open3d as o3d
-from scipy.io import savemat
-import os
 import csv
 
 
@@ -161,7 +151,7 @@ def Clustering(points, eps, minpts):
     
     return labels
 
-def ProcessJoint(points, eps, minpts):
+def ProcessJoint(points, eps, minpts, target, points_gel, points_joint, points_link, points_noise, points_tip):
     labels_joint = Clustering(points, eps, minpts)
     
     
@@ -179,12 +169,10 @@ def ProcessJoint(points, eps, minpts):
     
     t = target
     joint_index = np.where(target==1)[0]
-    #print(guesses)
     for i in range(len(noise_idx)):
         t[joint_index[noise_idx[i]]] = guesses[i]
         
     labels_joint = np.delete(labels_joint, noise_idx)
-    #points_joint = np.delete(points_joint, noise_idx)
     
     return labels_joint, t 
 
@@ -211,7 +199,6 @@ def LinkLength(inpoints, labels):
     Density = [] ## Density of Links, for clustering evaluation
     ### Fitting And Length Calculation
     for i in range(labels.max()+1):
-        #print(i)
         data = inpoints[labels == i]  ## Get Pos of 1 link
     
         x = data[:,0] ## Get X coord
@@ -234,7 +221,6 @@ def LinkLength(inpoints, labels):
                 color = 'lime'
                 n1 = math.ceil(len(x)/2) ## Cut Index
                 tempIdx = [np.arange(n1+10),np.arange(n1-10,len(x))]  ### [[0 1 2 3 4 5][6 7 8 9 10]] shape. used in next FOR
-                #print(tempIdx)
             else:  ## else: fit at once
                 color = 'red'
                 tempIdx = [np.arange((len(x)))]
@@ -269,7 +255,6 @@ def LinkLength(inpoints, labels):
                 znew.append(tempZnew)
         
             if len(xnew) == 2:
-                #print(xnew)
                 xnew = np.concatenate((xnew[0][:n1],xnew[1][10:]))
                 ynew = np.concatenate((ynew[0][:n1],ynew[1][10:]))
                 znew = np.concatenate((znew[0][:n1],znew[1][10:]))
@@ -311,7 +296,6 @@ def LinkLength(inpoints, labels):
     return length, endToend, Density, EndPoints
 
 def ProcessLink(inpoints, z_multiple, eps1, eps2):
-    #ori_points_z = points[:,2]  ## store original points
     inpoints[:,2] = inpoints[:,2]*z_multiple  ## multiply z coord for seperation
     labels_link = Clustering(inpoints, eps1, 3)  ## Clustering Links
     
@@ -323,9 +307,7 @@ def ProcessLink(inpoints, z_multiple, eps1, eps2):
     labels_repeat = np.where(Density>avg_density)[0] ### Re clusteing High density links
     
     first_labels_link = labels_link[:]
-    
-    #print('AVG DENSITY:'+str(avg_density))
-   
+       
     #### Sepereate HD/LD Link######
     HDLink = np.array(inpoints[np.where(labels_link==0)])  ###Link points with High Density
     for i in labels_repeat[1:]:
@@ -347,8 +329,6 @@ def ProcessLink(inpoints, z_multiple, eps1, eps2):
     noiseIndex = np.where(labels_HDLink==-1)[0]
     labels_HDLink = labels_HDLink+(1+max(labels_LDLink))
     labels_HDLink[noiseIndex] = -1
-    #print(labels_HDLink)
-    #print(labels_LDLink)
     
     labels_link = np.concatenate((labels_LDLink,labels_HDLink))
     final_link_points = np.concatenate((LDLink,HDLink),axis=0) 
@@ -359,286 +339,6 @@ def ProcessLink(inpoints, z_multiple, eps1, eps2):
     return labels_link, length, endToend, EndPoints, Density, [LDLink, HDLink], final_link_points, first_labels_link
         
 
-def FindConnection(labels_main, labels_sub, points_main, points_sub, eps, minpts):
-    connectivity = []
-    
-    points_main2 = points_main[:]
-    points_sub2 = points_sub[:]
-    
-    points_main2[:,2] = points_main2[:,2]*2
-    points_sub2[:,2] = points_sub2[:,2]*2
-    
-    for i in range(labels_main.max()+1):  ## Get 1 from Main points
-        conn_links = []
-        for j in range(labels_sub.max()+1):  ## Get 1 from Sub Points
-            idx_joint = np.where(labels_main == i)  ##Get Joint of selected
-            idx_link = np.where(labels_sub == j)
-            sample = np.concatenate((points_main2[idx_joint], points_sub2[idx_link]), axis=0) ## combine Main / Sub points
-            
-            
-            ## DBSCAN Combined Pts
-            model = DBSCAN(eps, min_samples=minpts)
-            model.fit_predict(sample)
-            pred = model.fit_predict(sample)
-            labels_sample= model.labels_
-            
-            ## Connected if Combined Pts are Clustered As single chunk
-            if labels_sample.max() == 0:
-                conn_links.append(j)
-        
-        connectivity.append(conn_links)
-    
-    return connectivity
-        
-def makedict(labels_joint, points_joint, labels_link, points_link, labels_tip, points_tip):  ## Make OUTPUT DICT
-    dic = {'Joint':[],'Link':[],'Tipcell':[], 'Gel':[], 'Noise':[]}
-    
-    for i in range(len(labels_joint)):
-        temp = np.append(points_joint[i],labels_joint[i])
-        dic['Joint'].append(temp)
-        
-    for i in range(len(labels_link)):
-        temp = np.append(points_link[i],labels_link[i])
-        dic['Link'].append(temp)
-        
-    for i in range(len(labels_tip)):
-        temp = np.append(points_tip[i],labels_tip[i])
-        dic['Tipcell'].append(temp)
-        
-    dic['Gel'].append(points_gel)
-    dic['Noise'].append(points_noise)
-        
-    return dic
-
-def showPC(tip,link,joint,points) :
-    ## Get Selected Pts
-    idx_tip = np.where(target==4)
-    idx_tip_selected = idx_tip[0][tip]
-    
-    idx_link = np.where(target==2)
-    idx_link_selected = idx_link[0][link]
-    
-    idx_joint = np.where(target==1)
-    idx_joint_selected = idx_joint[0][joint]
-    
-    idx_gel = np.where(target==0)
-    
-    colors=np.array([[0.5,0.5,0.5,1]]*len(points))
-    
-    ## Set color to Selected Pts
-    try:
-        #colors[idx_tip_selected] = [1,0,0,1]
-        #colors[idx_link_selected] = [0,1,0,1]   
-        
-        #colors[idx_gel] = [0,0,0,1]
-        colors[idx_joint_selected] = [0,1,1,1]
-    except:
-        pass
-    
-    ## PC SHOW
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-    pcd.colors = o3d.utility.Vector3dVector(colors[:, :3])
-    o3d.visualization.draw_geometries([pcd])
-    
-def Connectivity(n):
-     
-    conn_tip = []
-    for i in range(labels_tip.max()+1): conn_tip.append([])
-    
-    conn_LinkEnds = [] ## Connectivity of LinkEndPoint
-    for i in range(len(LinkEnds)): conn_LinkEnds.append([])
-    
-    for i in range(labels_tip.max()+1):
-        tip_idx = np.where(labels_tip==i)[0]
-        ### get tipcell ref pos
-        if len(tip_idx) != 1:
-            tip_pos = points_tip[tip_idx].mean(axis=0)
-        else :
-            tip_pos = points_tip[tip_idx][0]
-        
-        ### Find Nearest LinkEnd
-        conn_tip[i] = [0]   ## Initial Loop
-        CurLength = math.sqrt(pow(abs(tip_pos[0]-LinkEnds[0][0]),2) 
-                              + pow(abs(tip_pos[1]-LinkEnds[0][1]),2) 
-                              + pow(abs(tip_pos[2]-LinkEnds[0][2]),2))
-        
-        for j in range(1,len(LinkEnds)):
-            temp = math.sqrt(pow(abs(tip_pos[0]-LinkEnds[j][0]),2) 
-                              + pow(abs(tip_pos[1]-LinkEnds[j][1]),2) 
-                              + pow(abs(tip_pos[2]-LinkEnds[j][2]),2))
-            if temp < CurLength:
-                conn_tip[i] = [int(j/2)]
-                CurLength = temp
-        ### Record conn_LinkEnds Data 
-        Cur_Link = conn_tip[i][0]
-        l1 = math.sqrt(pow(abs(tip_pos[0]-LinkEnds[Cur_Link*2][0]),2) 
-                          + pow(abs(tip_pos[1]-LinkEnds[Cur_Link*2][1]),2) 
-                          + pow(abs(tip_pos[2]-LinkEnds[Cur_Link*2][2]),2))
-        l2 = math.sqrt(pow(abs(tip_pos[0]-LinkEnds[Cur_Link*2+1][0]),2) 
-                          + pow(abs(tip_pos[1]-LinkEnds[Cur_Link*2+1][1]),2) 
-                          + pow(abs(tip_pos[2]-LinkEnds[Cur_Link*2+1][2]),2))
-        if l1 < l2:
-            conn_LinkEnds[Cur_Link*2] = ['t'+str(i)]
-        else:
-            conn_LinkEnds[Cur_Link*2+1] = ['t'+str(i)]
-    
-    
-    
-    ### Find Joint/Gel - Link Connection
-    classifier = KNeighborsClassifier(n_neighbors = n)
-    KNN_labels = []  ## Labels for KNN
-    KNN_points = np.concatenate((points_joint, points_gel))  ## points for KNN
-    KNN_points = KNN_points.tolist()
-    
-    for i in labels_joint:
-        KNN_labels.append('j'+str(i))
-    
-    for i in labels_gel:
-        KNN_labels.append('g') 
-        
-    classifier.fit(KNN_points, KNN_labels)
-        
-    temp_conn = classifier.predict(LinkEnds)
-    
-    for i in range(len(conn_LinkEnds)):
-        if conn_LinkEnds[i] == []:
-            temp = temp_conn[i][:]
-            conn_LinkEnds[i] = [temp]
-            
-    
-    conn_link = []
-    for i in range(labels_link.max()+1): conn_link.append([])
-    conn_joint = []
-    for i in range(labels_joint.max()+1): conn_joint.append([])
-    conn_gel = []
-    
-    for i in range(len(conn_LinkEnds)):   ## Make Connectivity List
-        if conn_LinkEnds[i][0][0] == 'j':
-            conn_joint[int(conn_LinkEnds[i][0][1:])].append(int(i/2))
-        elif conn_LinkEnds[i][0][0] == 'g':
-            conn_gel.append(int(i/2))
-            
-    for i in range(len(conn_LinkEnds)):
-        try:
-            conn_link[int(i/2)].append(conn_LinkEnds[i][0])
-        except:
-            pass
-        
-        
-    return conn_link, conn_joint, conn_tip, conn_gel
-
-
-def ShowSkel(*args):
-    
-    colors=np.array([[0.5,0.5,0.5,1]]*len(points))
-    if len(args) == 0:
-        colors[np.where(target==0)[0]] = [1,1,0,1]   #gel
-        colors[np.where(target==1)[0]] = [0,1,0,1]   #joint
-        colors[np.where(target==2)[0]] = [0,0,1,1]   #link
-        colors[np.where(target==3)[0]] = [0,0,0,1]   #noise
-        colors[np.where(target==4)[0]] = [1,0,0,1]   #Tipcell
-    elif args[0] == 0: ## Gel
-        colors[np.where(target!=0)[0]] = [0,0,0,1]
-        colors[np.where(target==0)[0]] = [1,1,0,1]
-    elif args[0] == 1: ## joint
-        paint_index = [0]*len(points)
-        t = np.where(target==1)[0]
-        for i in range(len(t)):
-            paint_index[t[i]] = labels_joint[i]*3 
-        colors = plt.get_cmap("hsv")(paint_index)
-        colors[np.where(target!=1)[0]] = [0,0,0,1]
-        colors[t[np.where(labels_joint==-1)[0]]] = [1,0,1,1]
-    elif args[0] == 2: ## link
-        paint_index = [0]*len(points)
-        t = np.where(target==2)[0]
-        for i in range(len(t)):
-            paint_index[t[i]] = labels_link[i]*3 
-        colors = plt.get_cmap("prism")(paint_index)
-        colors[np.where(target!=2)[0]] = [0,0,0,1]
-        colors[t[np.where(labels_link==-1)[0]]] = [1,0,1,1]
-    elif args[0] == 4: ## tipcell
-        paint_index = [0]*len(points)
-        t = np.where(target==4)[0]
-        for i in range(len(t)):
-            paint_index[t[i]] = labels_tip[i]*3     
-        colors = plt.get_cmap("hsv")(paint_index)
-        colors[np.where(target!=4)[0]] = [0,0,0,1]
-        colors[t[np.where(labels_tip==-1)[0]]] = [1,0,1,1]
-
-    ###### Remove Overlapped points
-    #points2 = points[np.where(target!=0)]
-    #colors2 = colors[np.where(target!=0)]
-
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-
-    pcd.colors = o3d.utility.Vector3dVector(colors[:, :3])
-    vis = o3d.visualization.VisualizerWithEditing()
-    vis.create_window()
-    vis.add_geometry(pcd)
-    vis.run()
-    vis.destroy_window()
-    print("")
-    picked = vis.get_picked_points()
-    for i in picked:
-        temp = target[:i].tolist()
-        if target[i] == 1:
-            forecount = temp.count(1)
-            print('label: '+str(labels_joint[forecount]))
-        elif target[i] == 2:
-            forecount = temp.count(2)
-            print('label: '+str(labels_link[forecount]))
-        elif target[i] == 4:
-            forecount = temp.count(4)
-            print('label: '+str(labels_tip[forecount]))
-    
-    return colors
-
-def ReturnSkel(*args):
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points)
-    colors=np.array([[0.5,0.5,0.5,1]]*len(points))
-    tag = np.array([[-1]]*len(points))
-    if len(args) == 0:
-        colors[np.where(target==0)[0]] = [0.92,0.5,0.2,1]   #gel
-        colors[np.where(target==1)[0]] = [0,1,0,1]   #joint
-        colors[np.where(target==2)[0]] = [0,0,1,1]   #link
-        colors[np.where(target==3)[0]] = [0.5,0.5,0.5,1]   #noise
-        colors[np.where(target==4)[0]] = [1,0,0,1]   #Tipcell
-        tag = [target[i:i + 1] for i in range(0, len(target), 1)]
-    elif args[0] == 0: ## Gel
-        colors[np.where(target!=0)[0]] = [0,0,0,1]
-        colors[np.where(target==0)[0]] = [1,1,0,1]
-    elif args[0] == 1: ## joint
-        paint_index = [0]*len(points)
-        t = np.where(target==1)[0]
-        for i in range(len(t)):
-            paint_index[t[i]] = labels_joint[i]*3 
-        colors = plt.get_cmap("hsv")(paint_index)
-        colors[np.where(target!=1)[0]] = [0.5,0.5,0.5,0.5]
-        colors[t[np.where(labels_joint==-1)[0]]] = [1,0,1,1]
-        tag[np.where(target==1)]=[labels_joint[i:i + 1] for i in range(0, len(labels_joint), 1)]
-    elif args[0] == 2: ## link
-        paint_index = [0]*len(points)
-        t = np.where(target==2)[0]
-        for i in range(len(t)):
-            paint_index[t[i]] = labels_link[i]*2 
-        colors = plt.get_cmap("prism")(paint_index)
-        colors[np.where(target!=2)[0]] = [0.5,0.5,0.5,1]
-        colors[t[np.where(labels_link==-1)[0]]] = [1,0,1,1]
-        tag[np.where(target==2)]=[labels_link[i:i + 1] for i in range(0, len(labels_link), 1)]
-    elif args[0] == 4: ## tipcell
-        paint_index = [0]*len(points)
-        t = np.where(target==4)[0]
-        for i in range(len(t)):
-            paint_index[t[i]] = labels_tip[i]*3     
-        colors = plt.get_cmap("hsv")(paint_index)
-        colors[np.where(target!=4)[0]] = [0.5,0.5,0.5,1]
-        colors[t[np.where(labels_tip==-1)[0]]] = [1,0,1,1]
-        tag[np.where(target==4)]=[labels_tip[i:i + 1] for i in range(0, len(labels_tip), 1)]
-
-    return colors, tag
 
 def VesselEval(chambersData, out_path):
     
@@ -646,21 +346,6 @@ def VesselEval(chambersData, out_path):
     PostData = []
     
     for b in range(len(chambersData)):
-        global points
-        global target
-        global points_gel
-        global points_joint
-        global points_link
-        global points_tip
-        global points_noise
-        global labels_gel
-        global labels_joint
-        global labels_link
-        global labels_tip
-        global labels_noise
-        global LinkEnds
-        
-        
         
         chamber = b
         print(chamber)
@@ -682,8 +367,8 @@ def VesselEval(chambersData, out_path):
         points_tip = points[target==4]
         points_noise = points[target==3]
         
-        ##### Cluster / Process Pts ######  
-        labels_joint, target = ProcessJoint(points_joint,30,5)
+        ##### Cluster / Process Pts ######
+        labels_joint, target = ProcessJoint(points_joint,30,5,target, points_gel, points_joint, points_link, points_noise, points_tip)
         points_gel = points[target==0]
         points_joint = points[target==1]
         points_link = points[target==2]
@@ -709,10 +394,6 @@ def VesselEval(chambersData, out_path):
         for i in range(len(LinkDensity)):
             Points_Density[link_index[np.where(labels_link==i)]] = LinkDensity[i]
     
-    
-        ##### Connectivity Find #######
-        
-        conn_link, conn_joint, conn_tip, conn_gel = Connectivity(2)
         
         ######## Write to Dic ##########
         dic = {'Joint':[],'Link':[],'Tipcell':[]}
@@ -720,7 +401,6 @@ def VesselEval(chambersData, out_path):
         temp = {}
         for i in range(labels_joint.max()+1):
             temp_idx = np.where(labels_joint == i)
-            #print(temp_idx)
             temp[str(i)] = {'points':points_joint[temp_idx]}     
         dic['Joint'] = temp
     
@@ -728,7 +408,6 @@ def VesselEval(chambersData, out_path):
         temp = {}
         for i in range(labels_link.max()+1):
             temp_idx = np.where(labels_link == i)
-            #print(temp_idx)
             Tortuosity = length[i]/endToend[i]
             temp[str(i)] = {'points':points_link[temp_idx],'Length':length[i],'EndToEnd':endToend[i],'Tortuosity':Tortuosity}
         dic['Link'] = temp
@@ -737,7 +416,6 @@ def VesselEval(chambersData, out_path):
         temp = {}
         for i in range(labels_tip.max()+1):
             temp_idx = np.where(labels_tip == i)
-            #print(temp_idx)
             temp[str(i)] = {'points':points_tip[temp_idx],}     
         dic['Tipcell'] = temp
     
@@ -748,8 +426,6 @@ def VesselEval(chambersData, out_path):
         
             ##### Path Find #####
         path = []
-        PCs = o3d.geometry.PointCloud()
-        PCs.points = o3d.utility.Vector3dVector(points)
     
         pt_chamber0 = PathTracking(dic)
         
@@ -819,11 +495,11 @@ def VesselEval(chambersData, out_path):
                 poptx, pcovx = curve_fit(Linearfunc, u, tempx) ## fit n vs x              
                 xnew = Linearfunc(u,poptx[0],poptx[1])
                 
-                popty, pcovy = curve_fit(Linearfunc, u, tempy) ## fit n vs x             
+                popty, pcovy = curve_fit(Linearfunc, u, tempy) ## fit n vs y             
                 ynew = Linearfunc(u,popty[0],popty[1])
     
                 
-                poptz, pcovz = curve_fit(Linearfunc, u, tempz) ## fit n vs x               
+                poptz, pcovz = curve_fit(Linearfunc, u, tempz) ## fit n vs z               
                 znew = Linearfunc(u,poptz[0],poptz[1])
     
                 VectorLength = math.sqrt(pow(abs(xnew[0]-xnew[-1]),2)
@@ -833,7 +509,6 @@ def VesselEval(chambersData, out_path):
                           (ynew[0]-ynew[-1])/VectorLength,
                           (znew[0]-znew[-1])/VectorLength]
             
-                #Directionality[-1] = tempVector
                 degree = np.arctan2(tempVector[1],tempVector[0])
                 Directionality[-1] = degree
             else:
@@ -852,20 +527,6 @@ def VesselEval(chambersData, out_path):
         dic['Sproting_Length'] = Sp_Length
         dic['path'] = path
         
-
-        
-        conn_count = []
-        for i in conn_joint:
-            i = set(i)
-            i = list(i)
-            conn_count.append(len(i))
-        
-        
-        
-        ####### Show Connectivity #######
-        
-        connectivity = conn_joint
-
         
         Parameter_dic = {'Total Length':sum(length),
                          'Link Length':length,
@@ -897,4 +558,4 @@ def VesselEval(chambersData, out_path):
     
     return OutputData
           
-            
+          
