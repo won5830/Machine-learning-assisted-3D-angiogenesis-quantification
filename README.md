@@ -10,4 +10,4 @@ conda install pytorch torchvision pytorch-cuda=11.3 -c pytorch -c nvidia
 Specific guidelines for implementation are at each subfolder. 
 
 ## Acknowledgement
-This repo is built on [dgcnn.pytorch](https://github.com/antao97/dgcnn.pytorch).
+This repo is built on [dgcnn.pytorch](https://github.com/antao97/dgcnn.pytorch) and [pointnet2.pytorch](https://github.com/sshaoshuai/Pointnet2.PyTorch).
