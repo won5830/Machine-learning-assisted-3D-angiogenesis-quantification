@@ -209,13 +209,10 @@ def train_kfold(args, io):
     tot_oa_fold_true = []
     for fold, (train_ind, val_ind) in enumerate(kf.split(range(len(tot_dataset)))):
         print("=========================================K-FOLD: {}========================================".format(fold))
-        train_sampler = torch.utils.data.sampler.SubsetRandomSampler(train_ind)
-        valid_sampler = torch.utils.data.sampler.SubsetRandomSampler(val_ind)
-        
-        train_loader = DataLoader(PointDataset(partition='train', num_points=args.num_points, augmentation = True), 
-                        num_workers=4, batch_size=args.batch_size, shuffle=False, drop_last=True, sampler = train_sampler)
-        val_loader = DataLoader(PointDataset(partition='train', num_points=args.num_points, augmentation = False), 
-                        num_workers=4, batch_size=args.test_batch_size, shuffle=False, drop_last=True, sampler = valid_sampler)
+        train_set = torch.utils.data.dataset.Subset(tot_dataset, train_ind)
+        val_set = torch.utils.data.dataset.Subset(tot_dataset, val_ind)
+        train_loader = DataLoader(train_set, num_workers=4, batch_size=args.batch_size, shuffle=False, drop_last=False)
+        val_loader = DataLoader(val_set, num_workers=4, batch_size=args.test_batch_size, shuffle=True, drop_last=False)
 
         #Try to load models
         if args.model == 'pointnet':
