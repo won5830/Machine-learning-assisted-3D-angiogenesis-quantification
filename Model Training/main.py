@@ -213,9 +213,9 @@ def train_kfold(args, io):
         valid_sampler = torch.utils.data.sampler.SubsetRandomSampler(val_ind)
         
         train_loader = DataLoader(PointDataset(partition='train', num_points=args.num_points, augmentation = True), 
-                        num_workers=4, batch_size=args.batch_size, shuffle=False, drop_last=False)
+                        num_workers=4, batch_size=args.batch_size, shuffle=False, drop_last=True, sampler = train_sampler)
         val_loader = DataLoader(PointDataset(partition='train', num_points=args.num_points, augmentation = False), 
-                        num_workers=4, batch_size=args.test_batch_size, shuffle=False, drop_last=False)
+                        num_workers=4, batch_size=args.test_batch_size, shuffle=False, drop_last=True, sampler = valid_sampler)
 
         #Try to load models
         if args.model == 'pointnet':
