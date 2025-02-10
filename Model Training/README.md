@@ -1,8 +1,17 @@
 ## Data Preparation 
 Download the data for skeleton segmentation [here](https://drive.google.com/file/d/1xOV4dOoEmoTvoUJTwri3bK9yP0qrI_Ai/view?usp=share_link) and save in `data/test_skel_ply_hdf5_data_train*.h5`
-The original microscopy data could be downloaded [here](https://drive.google.com/file/d/1wznyceTYldhCbtM-91AbHcJIagqBCwIi/view?usp=drive_link)
+The original microscopy data could be downloaded [here](https://drive.google.com/file/d/1wznyceTYldhCbtM-91AbHcJIagqBCwIi/view?usp=drive_link). The format of the microscopy h5 data is as below:
 
-
+```
+Tot_data_microscope.h5
+├── ...
+├── chamber*
+│   ├──images
+│   │  ├── 3D matrix of [H,W,z-stack]
+│   ├──meta
+│   │  ├── ...
+├── ...
+```
 
 
 ## Run 
